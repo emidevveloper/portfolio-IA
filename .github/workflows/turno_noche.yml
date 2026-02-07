@@ -1,0 +1,49 @@
+name: Turno de Noche de la IA
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 3 AM cada noche
+  workflow_dispatch:      # Botón manual
+
+jobs:
+  ia_job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar inactividad (48h)
+        id: check_activity
+        run: |
+          LAST_COMMIT=$(git log -1 --format=%ct)
+          NOW=$(date +%s)
+          DIFF=$((NOW - LAST_COMMIT))
+          if [ $DIFF -lt 172800 ]; then
+            echo "run_ia=false" >> $GITHUB_OUTPUT
+          else
+            echo "run_ia=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Instalar dependencias
+        if: steps.check_activity.outputs.run_ia == 'true' || github.event_name == 'workflow_dispatch'
+        run: pip install google-generativeai
+
+      - name: Ejecutar IA
+        if: steps.check_activity.outputs.run_ia == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python AI_scripts/ia_worker.py # Ruta actualizada
+
+      - name: Push de cambios
+        if: steps.check_activity.outputs.run_ia == 'true' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config --global user.name "Gemini Nocturno"
+          git config --global user.email "gemini-bot@github.com"
+          git add styles.css
+          git commit -m "🌙 IA Nocturna: Retoque de diseño por inactividad"
+          git push
