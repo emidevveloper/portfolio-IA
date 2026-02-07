@@ -5,7 +5,7 @@ from datetime import datetime
 # 1. Configuración de Gemini
 # Usamos el nombre del modelo más estable para evitar errores 404
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-3-flash')
+model = genai.GenerativeModel('gemini-3-flash-preview')
 
 # 2. Archivo objetivo (asegúrate de que el nombre sea exacto)
 archivo_objetivo = "styles.css"
