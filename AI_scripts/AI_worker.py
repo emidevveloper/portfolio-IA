@@ -2,47 +2,54 @@ import google.generativeai as genai
 import os
 from datetime import datetime
 
-# Configuración de Gemini usando el Secret de GitHub
+# 1. Configuración de Gemini
+# Usamos el nombre del modelo más estable para evitar errores 404
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Archivo objetivo
+# 2. Archivo objetivo (asegúrate de que el nombre sea exacto)
 archivo_objetivo = "styles.css"
 
-# 1. Leer el código actual
+# 3. Leer el código actual para dárselo a la IA
 if os.path.exists(archivo_objetivo):
     with open(archivo_objetivo, "r") as f:
         css_actual = f.read()
 else:
-    css_actual = "/* Estilo base creado por Gemini */"
+    css_actual = "/* Estilo base inicial */"
 
-# 2. El Prompt con tus nuevas restricciones
+# 4. Prompt con tus restricciones de seguridad visual
 prompt = f"""
-Eres un diseñador web experto. Tu misión es añadir al final de este CSS 
-una sección de estilos experimentales (colores neón o efectos hover elegantes).
+Eres un diseñador web experto en interfaces modernas. 
+Tu misión es añadir al final de este código CSS una sección de estilos experimentales.
 
-REGLAS DE SEGURIDAD:
-- Prohibido usar animaciones con efectos de flashes, parpadeos rápidos o estroboscópicos.
-- Los efectos deben ser suaves y seguros para personas con fotosensibilidad.
-- No borres el código anterior, solo añade al final.
+REGLAS ESTRICTAS:
+- PROHIBIDO: No uses animaciones con flashes, parpadeos rápidos o efectos estroboscópicos.
+- SEGURIDAD: Los efectos deben ser suaves (glows lentos, hovers elegantes, colores neón fijos).
+- No borres nada del código original, solo añade al final.
+- Devuelve SOLO el código CSS, sin explicaciones.
 
 CÓDIGO ACTUAL:
 {css_actual}
 """
 
-# 3. Generación y limpieza
+# 5. Ejecución y guardado
 try:
+    print("Despertando a la IA...")
     response = model.generate_content(prompt)
     nuevo_contenido = response.text
+    
+    # Limpiamos posibles etiquetas de Markdown que la IA a veces añade
     nuevo_contenido = nuevo_contenido.replace("```css", "").replace("```", "").strip()
 
-    # 4. Forzar cambio con marca de tiempo (Evita el error de 'nothing to commit')
-    timestamp = f"\n\n/* Actualizado por Gemini: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} */\n"
+    # Creamos una marca de tiempo única para que GitHub siempre detecte un cambio
+    ahora = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    firma = f"\n\n/* 🌙 Retoque nocturno: {ahora} - Diseño seguro sin flashes */\n"
 
-    # 5. Sobreescribir el archivo completo
+    # Escribimos el archivo: Original + Lo nuevo de la IA + Firma con fecha
     with open(archivo_objetivo, "w") as f:
-        f.write(css_actual + "\n" + nuevo_contenido + timestamp)
+        f.write(css_actual + "\n" + nuevo_contenido + firma)
     
-    print("CSS actualizado con éxito.")
+    print(f"¡Éxito! El archivo {archivo_objetivo} ha sido actualizado.")
+
 except Exception as e:
-    print(f"Error: {e}")
+    print(f"Error durante la ejecución: {e}")
