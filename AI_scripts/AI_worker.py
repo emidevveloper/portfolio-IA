@@ -6,7 +6,7 @@ from datetime import datetime
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# Ajustado a "styles.css"
+# Archivo objetivo
 archivo_objetivo = "styles.css"
 
 # 1. Leer el código actual
@@ -16,30 +16,30 @@ if os.path.exists(archivo_objetivo):
 else:
     css_actual = "/* Estilo base creado por Gemini */"
 
-# 2. El Prompt creativo con restricciones de seguridad
+# 2. El Prompt con tus nuevas restricciones
 prompt = f"""
 Eres un diseñador web experto. Tu misión es añadir al final de este CSS 
 una sección de estilos experimentales (colores neón o efectos hover elegantes).
-REGLAS CRÍTICAS:
-- No borres el código existente.
+
+REGLAS DE SEGURIDAD:
 - Prohibido usar animaciones con efectos de flashes, parpadeos rápidos o estroboscópicos.
 - Los efectos deben ser suaves y seguros para personas con fotosensibilidad.
+- No borres el código anterior, solo añade al final.
+
 CÓDIGO ACTUAL:
 {css_actual}
 """
 
-# 3. Generación
+# 3. Generación y limpieza
 try:
     response = model.generate_content(prompt)
     nuevo_contenido = response.text
-    
-    # Limpiar formato markdown
     nuevo_contenido = nuevo_contenido.replace("```css", "").replace("```", "").strip()
 
-    # 4. Añadir marca de tiempo para forzar que Git detecte un cambio siempre
+    # 4. Forzar cambio con marca de tiempo (Evita el error de 'nothing to commit')
     timestamp = f"\n\n/* Actualizado por Gemini: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} */\n"
-    
-    # 5. Escribir el archivo (manteniendo lo anterior + lo nuevo)
+
+    # 5. Sobreescribir el archivo completo
     with open(archivo_objetivo, "w") as f:
         f.write(css_actual + "\n" + nuevo_contenido + timestamp)
     
